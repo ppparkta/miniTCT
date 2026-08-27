@@ -378,7 +378,7 @@ let dirty = true;        // 다음 프레임에 한 번 그려야 하는지
 
 const FALLBACK = { body:"미지의 천체", kind:"mercury", texture:null, glow:"#8FB6D9" };
 const crewOf = n => CREW[n] || FALLBACK;
-const byNo = no => SESSIONS.find(s => s.no === no);
+const bySid = sid => SESSIONS[sid];
 const isSoon = s => !s.youtube && new Date(s.date) > new Date();
 const pad = n => String(n).padStart(2, "0");
 const thumbUrl = (id, size) => `https://i.ytimg.com/vi/${id}/${size}.jpg`;
@@ -608,7 +608,12 @@ scene.add(sun);
    5. 궤도
    ============================================================ */
 const R0 = 13, RMAX = 62;
-const N = SESSIONS.length;
+/* 궤도는 회차(no) 하나당 하나다. 같은 회차의 발표는 같은 궤도를
+   나눠 쓰며, 궤도 위에서 서로 균등한 각도로 떨어져 돈다. */
+const ORBITS = [...new Set(SESSIONS.map(s => s.no))]
+  .sort((a, b) => a - b)
+  .map(no => ({ no, list: SESSIONS.filter(s => s.no === no) }));
+const N = ORBITS.length;
 const STEP = N > 1 ? (RMAX - R0) / (N - 1) : 0;
 /* 행성 반지름은 궤도 간격에 비례한다. 회차가 늘어 간격이 좁아지면
    행성도 같이 작아져 이웃 궤도를 침범하지 않는다. */
@@ -616,92 +621,104 @@ const BASE = Math.min(2.6, Math.max(.5, STEP * .44));
 
 const bodies = [], hitMeshes = [];
 
-SESSIONS.forEach((s, i) => {
-  const crew = crewOf(s.presenter);
-  const t = traitsOf(crew);
+ORBITS.forEach((o, i) => {
   const r = R0 + STEP * i;
-  const rad = BASE * t.size;
-  const angle = (i * 137.5) * Math.PI / 180;      // 황금각으로 시작 위치 분산
 
   const orbit = new THREE.Group();
   orbit.rotation.x = (i % 2 ? 1 : -1) * (0.02 + (i % 5) * 0.012);   // 약한 궤도 경사
   orbit.rotation.z = (i % 3 ? -1 : 1) * (i % 7) * 0.008;
   scene.add(orbit);
 
-  /* 궤도선. 점선 재질은 선분 길이를 필요로 하는데 한 번만 계산하면 된다 */
+  /* 궤도선. 점선 재질은 선분 길이를 필요로 하는데 한 번만 계산하면 된다.
+     한 회차에 발표가 여럿이어도 궤도선은 하나다. */
   const pts = [];
   for (let a = 0; a <= 128; a++) {
     const t = a / 128 * Math.PI * 2;
     pts.push(new THREE.Vector3(Math.cos(t) * r, 0, Math.sin(t) * r));
   }
   const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),
-    recv.has(s.no) ? LINE_LIT : LINE_DIM);
+    recv.has(o.no) ? LINE_LIT : LINE_DIM);
   line.computeLineDistances();
   line.matrixAutoUpdate = false; line.updateMatrix();
   orbit.add(line);
 
-  const pivot = new THREE.Group();                // 매 프레임 회전
-  pivot.rotation.y = angle;
-  orbit.add(pivot);
+  /* 궤도마다 같은 공전 속도를 쓴다. 같은 회차의 행성들은 간격을
+     유지한 채 함께 돈다. */
+  const speed = (2 * Math.PI) / (30 + i * 4.5);   // 바깥 궤도가 더 느리다
 
-  const holder = new THREE.Group();               // 위치 고정
-  holder.position.x = r;                          // +X가 항상 태양 반대 방향
-  holder.matrixAutoUpdate = false; holder.updateMatrix();
-  pivot.add(holder);
+  o.list.forEach((s, j) => {
+    const sid = SESSIONS.indexOf(s);               // 발표 하나를 가리키는 식별자
+    const crew = crewOf(s.presenter);
+    const t = traitsOf(crew);
+    const rad = BASE * t.size;
+    /* 황금각으로 궤도끼리 시작 위치를 흩고, 같은 궤도 안에서는
+       360/인원 만큼 벌린다 */
+    const angle = (i * 137.5 + j * 360 / o.list.length) * Math.PI / 180;
 
-  const mat = new THREE.MeshStandardMaterial({
-    map: surfaceOf(crew), roughness: .85, metalness: .02,
-    color: (recv.has(s.no) ? COL_RECV : COL_RAW).clone() });
-  const planet = new THREE.Mesh(GEO.sphere, mat);
-  planet.scale.setScalar(rad);
-  planet.rotation.z = t.tilt;                      // 자전축 기울기
-  holder.add(planet);
+    const pivot = new THREE.Group();               // 매 프레임 회전
+    pivot.rotation.y = angle;
+    orbit.add(pivot);
 
-  /* 클릭 판정용. 보이는 구체보다 크게 잡아야 작은 천체도 누를 수 있다 */
-  const hit = new THREE.Mesh(GEO.hit, HIT_MAT);
-  hit.scale.setScalar(Math.max(rad * 1.35, 1.6));
-  hit.userData.no = s.no;
-  hit.matrixAutoUpdate = false; hit.updateMatrix();
-  holder.add(hit);
-  hitMeshes.push(hit);
+    const holder = new THREE.Group();              // 위치 고정
+    holder.position.x = r;                         // +X가 항상 태양 반대 방향
+    holder.matrixAutoUpdate = false; holder.updateMatrix();
+    pivot.add(holder);
 
-  if (t.ring) {
-    const ring = new THREE.Mesh(GEO.ring, new THREE.MeshBasicMaterial({
-      color: new THREE.Color(crew.glow), transparent: true, opacity: .42,
-      side: THREE.DoubleSide, depthWrite: false }));
-    ring.scale.setScalar(rad);
-    if (t.ring === "upright") ring.rotation.y = .3;   // 천왕성처럼 거의 수직인 고리
-    else ring.rotation.x = Math.PI / 2 - .34;
-    ring.matrixAutoUpdate = false; ring.updateMatrix();
-    holder.add(ring);
-  }
-  if (t.tail) {
-    const tail = new THREE.Mesh(GEO.tail, new THREE.MeshBasicMaterial({
-      color: 0xBFE4FF, transparent: true, opacity: .16,
-      blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
-    tail.scale.set(rad * 1.5, rad * 11, rad * 1.5);
-    tail.rotation.z = -Math.PI / 2;               // +X = 태양 반대 방향
-    tail.position.x = rad * 5.5;
-    tail.matrixAutoUpdate = false; tail.updateMatrix();
-    holder.add(tail);
-  }
-  if (t.atmo > 0) {
-    const atmo = new THREE.Sprite(atmoMaterial(crew.glow, t.atmo));
-    atmo.scale.set(rad * 2.9, rad * 2.9, 1);
-    holder.add(atmo);
-  }
+    const mat = new THREE.MeshStandardMaterial({
+      map: surfaceOf(crew), roughness: .85, metalness: .02,
+      color: (recv.has(s.no) ? COL_RECV : COL_RAW).clone() });
+    const planet = new THREE.Mesh(GEO.sphere, mat);
+    planet.scale.setScalar(rad);
+    planet.rotation.z = t.tilt;                    // 자전축 기울기
+    holder.add(planet);
 
-  /* 호버 광휘는 필요할 때만 켠다. 꺼두면 드로우콜에서 아예 빠진다 */
-  const halo = new THREE.Sprite(haloMaterial(crew.glow));
-  halo.scale.set(rad * 4.6, rad * 4.6, 1);
-  halo.visible = false;
-  holder.add(halo);
+    /* 클릭 판정용. 보이는 구체보다 크게 잡아야 작은 천체도 누를 수 있다 */
+    const hit = new THREE.Mesh(GEO.hit, HIT_MAT);
+    hit.scale.setScalar(Math.max(rad * 1.35, 1.6));
+    hit.userData.sid = sid;
+    hit.matrixAutoUpdate = false; hit.updateMatrix();
+    holder.add(hit);
+    hitMeshes.push(hit);
 
-  bodies.push({
-    s, crew, rad, orbit, pivot, planet, mat, line, halo,
-    speed: (2 * Math.PI) / (30 + i * 4.5),        // 바깥 궤도가 더 느리다
-    spin: .12 + (i % 3) * .05,
-    delay: i * .09, grow: 0, hoverK: 1, settled: false
+    if (t.ring) {
+      const ring = new THREE.Mesh(GEO.ring, new THREE.MeshBasicMaterial({
+        color: new THREE.Color(crew.glow), transparent: true, opacity: .42,
+        side: THREE.DoubleSide, depthWrite: false }));
+      ring.scale.setScalar(rad);
+      if (t.ring === "upright") ring.rotation.y = .3;   // 천왕성처럼 거의 수직인 고리
+      else ring.rotation.x = Math.PI / 2 - .34;
+      ring.matrixAutoUpdate = false; ring.updateMatrix();
+      holder.add(ring);
+    }
+    if (t.tail) {
+      const tail = new THREE.Mesh(GEO.tail, new THREE.MeshBasicMaterial({
+        color: 0xBFE4FF, transparent: true, opacity: .16,
+        blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+      tail.scale.set(rad * 1.5, rad * 11, rad * 1.5);
+      tail.rotation.z = -Math.PI / 2;               // +X = 태양 반대 방향
+      tail.position.x = rad * 5.5;
+      tail.matrixAutoUpdate = false; tail.updateMatrix();
+      holder.add(tail);
+    }
+    if (t.atmo > 0) {
+      const atmo = new THREE.Sprite(atmoMaterial(crew.glow, t.atmo));
+      atmo.scale.set(rad * 2.9, rad * 2.9, 1);
+      holder.add(atmo);
+    }
+
+    /* 호버 광휘는 필요할 때만 켠다. 꺼두면 드로우콜에서 아예 빠진다 */
+    const halo = new THREE.Sprite(haloMaterial(crew.glow));
+    halo.scale.set(rad * 4.6, rad * 4.6, 1);
+    halo.visible = false;
+    holder.add(halo);
+
+    bodies.push({
+      sid, s, crew, rad, orbit, pivot, planet, mat, line, halo,
+      speed,
+      spin: .12 + ((i + j) % 3) * .05,
+      /* 궤도를 펼치는 연출은 궤도 그룹 하나에 걸리므로 대표 한 명만 돌린다 */
+      lead: j === 0, delay: i * .09, grow: 0, hoverK: 1, settled: false
+    });
   });
 });
 
@@ -733,7 +750,7 @@ function pickAt(x, y, fat){
     ptr.y = -((y + dy) / innerHeight) * 2 + 1;
     ray.setFromCamera(ptr, camera);
     const hits = ray.intersectObjects(hitMeshes, false);
-    if (hits.length) return hits[0].object.userData.no;
+    if (hits.length) return hits[0].object.userData.sid;
   }
   return null;
 }
@@ -762,8 +779,8 @@ canvas.addEventListener("pointerup", ev => {
   canvas.classList.remove("grabbing");
   const touch = isTouch(ev);
   if (!dragged) {
-    const no = pickAt(ev.clientX, ev.clientY, touch);
-    if (no) open(no);
+    const sid = pickAt(ev.clientX, ev.clientY, touch);
+    if (sid !== null) open(sid);
     else if (touch) setHover(null);
   } else if (touch) {
     setHover(null);
@@ -782,14 +799,14 @@ canvas.addEventListener("pointerleave", ev => {
   if (!isTouch(ev) && hovered !== null) setHover(null);
 });
 
-function setHover(no){
-  if (no === hovered) return;
-  const prev = bodies.find(b => b.s.no === hovered);
+function setHover(sid){
+  if (sid === hovered) return;
+  const prev = bodies.find(b => b.sid === hovered);
   if (prev) prev.settled = false;
-  hovered = no;
-  canvas.classList.toggle("pick", no !== null);
-  setReadout(no ? byNo(no) : null);
-  const cur = bodies.find(b => b.s.no === no);
+  hovered = sid;
+  canvas.classList.toggle("pick", sid !== null);
+  setReadout(sid !== null ? bySid(sid) : null);
+  const cur = bodies.find(b => b.sid === sid);
   if (cur) cur.settled = false;
   dirty = true;
 }
@@ -810,13 +827,13 @@ $("topBtn").addEventListener("click", () => {
 /* ============================================================
    8. 모달
    ============================================================ */
-function open(no){
-  const s = byNo(no);
+function open(sid){
+  const s = bySid(sid);
   if (!s) return;
   lastFocus = document.activeElement;
 
   const ms = $("mStage");
-  ms.dataset.no = no;
+  ms.dataset.no = s.no;
   if (s.youtube) {
     const hi = thumbUrl(s.youtube, "maxresdefault"), lo = thumbUrl(s.youtube, "mqdefault");
     ms.innerHTML = `
@@ -828,7 +845,7 @@ function open(no){
       ms.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${s.youtube}?autoplay=1&rel=0"
         title="${s.title}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture"
         allowfullscreen></iframe>`;
-      if (!recv.has(no)) mark(no);      // 재생하면 수신 완료로 기록
+      if (!recv.has(s.no)) mark(s.no);  // 재생하면 수신 완료로 기록
     });
   } else {
     ms.innerHTML = `<span class="none"><span class="g">${pad(s.no)}</span>
@@ -863,9 +880,8 @@ function mark(no){
   if (recv.has(no)) return;
   recv.add(no);
   store.write(recv);
-  const rec = bodies.find(b => b.s.no === no);
-  if (rec) {
-    rec.line.material = LINE_LIT;
+  for (const rec of bodies.filter(b => b.s.no === no)) {
+    rec.line.material = LINE_LIT;   // 궤도선은 같은 회차가 공유한다
     rec.mat.emissive.setHex(0x140E04);
     rec.settled = false;
     dirty = true;
@@ -918,7 +934,7 @@ function frame(){
   if (revolve) active = true;
 
   for (const rec of bodies) {
-    if (rec.grow < 1) {                           // 안쪽부터 순서대로 펼쳐진다
+    if (rec.lead && rec.grow < 1) {                // 안쪽부터 순서대로 펼쳐진다
       rec.grow = Math.max(0, Math.min(1, (elapsed - rec.delay) / .9));
       rec.orbit.scale.setScalar(Math.max(.0001, ease(rec.grow)));
       if (rec.grow >= 1) { rec.orbit.matrixAutoUpdate = false; rec.orbit.updateMatrix(); }
@@ -929,7 +945,7 @@ function frame(){
       rec.planet.rotation.y += rec.spin * dt;
     }
     if (!rec.settled) {                            // 호버 확대와 색 전환
-      const target = hovered === rec.s.no ? 1.32 : 1;
+      const target = hovered === rec.sid ? 1.32 : 1;
       rec.hoverK += (target - rec.hoverK) * .18;
       const want = recv.has(rec.s.no) ? COL_RECV : COL_RAW;
       rec.mat.color.lerp(want, .1);
@@ -939,7 +955,7 @@ function frame(){
         rec.settled = true;
       } else active = true;
       rec.planet.scale.setScalar(rec.rad * rec.hoverK);
-      rec.halo.visible = hovered === rec.s.no;
+      rec.halo.visible = hovered === rec.sid;
       if (rec.halo.visible) rec.halo.material.opacity = Math.min(.55, (rec.hoverK - 1) * 1.8);
     }
   }
