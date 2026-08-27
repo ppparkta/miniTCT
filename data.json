@@ -5,22 +5,22 @@
     "unseen": "#B9C8DA"
   },
   "crew": {
-    "수양": {
+    "수빈": {
       "kind": "moon",
       "texture": "textures/moon.jpg",
       "glow": "#D8D3C9"
     },
-    "두호": {
+    "소정": {
       "kind": "earth",
       "texture": "textures/earth.jpg",
       "glow": "#5FA8D8"
     },
-    "윤중": {
+    "형균": {
       "kind": "jupiter",
       "texture": "textures/jupiter.jpg",
       "glow": "#E2B375"
     },
-    "미정": {
+    "창준": {
       "kind": "uranus",
       "texture": "textures/uranus.jpg",
       "glow": "#8FD8E2"
@@ -29,101 +29,122 @@
   "sessions": [
     {
       "no": 1,
-      "date": "2026-03-12",
-      "title": "오브젝트 1~4장: 객체지향 설계 입문",
-      "presenter": "수양",
-      "youtube": "dQw4w9WgXcQ"
+      "date": "2026-04-07",
+      "title": "[미니테코톡] DB 쿼리 효과적으로 사용하기",
+      "presenter": "수빈",
+      "youtube": "rFis02cGLtU"
+    },
+    {
+      "no": 1,
+      "date": "2026-04-07",
+      "title": "[미니테코톡] 성능 최적화: 폰트 렌더 블로킹 해결하기",
+      "presenter": "소정",
+      "youtube": "6ANKXnBFX1o"
     },
     {
       "no": 2,
-      "date": "2026-03-19",
-      "title": "트랜잭션 격리 수준과 락 전략",
-      "presenter": "두호",
-      "youtube": null
+      "date": "2026-04-16",
+      "title": "[미니테코톡] 디버깅하다 배운 동시성 제어",
+      "presenter": "수빈",
+      "youtube": "eEcZoL4juCI"
     },
     {
-      "no": 3,
-      "date": "2026-03-26",
-      "title": "분산 트랜잭션: 2PC, Saga, TCC",
-      "presenter": "미정",
-      "youtube": null
+      "no": 2,
+      "date": "2026-04-19",
+      "title": "[미니테코톡] 엑셀 업로드 비동기 전환",
+      "presenter": "형균",
+      "youtube": "WAw5uKii82A"
     },
     {
       "no": 4,
-      "date": "2026-04-02",
-      "title": "MySQL 인덱스와 실행 계획 읽기",
-      "presenter": "윤중",
-      "youtube": null
+      "date": "2026-05-14",
+      "title": "[미니테코톡] PDF 생성 방식으로 areact-pdf를 선택한 이유는?",
+      "presenter": "소정",
+      "youtube": "gJQOa6hanao"
     },
     {
       "no": 5,
-      "date": "2026-04-09",
-      "title": "멱등성 있는 API 설계",
-      "presenter": "수양",
-      "youtube": null
+      "date": "2026-05-15",
+      "title": "[미니테코톡] 멱등성과 동시성 문제 해결기",
+      "presenter": "수빈",
+      "youtube": "uzSUPxLCFSY"
     },
     {
       "no": 6,
-      "date": "2026-04-16",
-      "title": "재고 정합성: 음수 재고를 막는 방법",
-      "presenter": "두호",
-      "youtube": null
+      "date": "2026-05-16",
+      "title": "[미니테코톡] 애니메이션 성능 최적화",
+      "presenter": "소정",
+      "youtube": "pVnpWuYRiNk"
+    },
+    {
+      "no": 6,
+      "date": "2026-05-16",
+      "title": "[미니테코톡] ChatGPT가 자꾸 내 말을 끊어서 직접 토익 스피킹 앱을 만들었다",
+      "presenter": "수빈",
+      "youtube": "Hag7Tj9uQjo"
+    },
+    {
+      "no": 6,
+      "date": "2026-05-16",
+      "title": "[미니테코톡] 재시도 아키텍처 개선",
+      "presenter": "형균",
+      "youtube": "Wp0SFLAXodU"
     },
     {
       "no": 7,
-      "date": "2026-04-23",
-      "title": "유니코드와 MySQL 인코딩",
-      "presenter": "윤중",
-      "youtube": null
+      "date": "2026-05-23",
+      "title": "[미니테코톡] 개발자가 다룰 수 있는 SEO 영역에 대하여",
+      "presenter": "소정",
+      "youtube": "nTo9NjJBx8o"
+    },
+    {
+      "no": 7,
+      "date": "2026-05-23",
+      "title": "[미니테코톡] Stale Connection 문제 해결기",
+      "presenter": "수빈",
+      "youtube": "AzuEpssdhNM"
     },
     {
       "no": 8,
-      "date": "2026-04-30",
-      "title": "레이트 리미팅: 토큰 버킷과 리키 버킷",
-      "presenter": "미정",
-      "youtube": null
-    },
-    {
-      "no": 9,
-      "date": "2026-05-14",
-      "title": "HTTP 캐싱: Cache-Control과 ETag",
-      "presenter": "두호",
-      "youtube": null
+      "date": "2026-06-09",
+      "title": "[미니테코톡] TestContainers 최적화로 통합테스트 시간 23배 단축하기",
+      "presenter": "수빈",
+      "youtube": "I8mYvzYqMUk"
     },
     {
       "no": 10,
-      "date": "2026-05-21",
-      "title": "피처 플래그 시스템 설계",
-      "presenter": "수양",
-      "youtube": null
+      "date": "2026-06-25",
+      "title": "[미니테코톡] TCP 3-way Handshake",
+      "presenter": "수빈",
+      "youtube": "hVZvY68MTtc"
+    },
+    {
+      "no": 10,
+      "date": "2026-06-25",
+      "title": "[미니테코톡] 세션과 JWT",
+      "presenter": "형균",
+      "youtube": "jDXx0VcaG20"
     },
     {
       "no": 11,
-      "date": "2026-05-28",
-      "title": "카프카 기초와 메시지 순서 보장",
-      "presenter": "윤중",
-      "youtube": null
+      "date": "2026-06-27",
+      "title": "[미니테코톡] 로깅 비용 최적화",
+      "presenter": "수빈",
+      "youtube": "5ympcBBJROU"
     },
     {
       "no": 12,
-      "date": "2026-06-04",
-      "title": "배치 잡 설계와 재실행 안전성",
-      "presenter": "두호",
-      "youtube": null
+      "date": "2026-08-02",
+      "title": "[미니테코톡] LLM 기반 로그 분석기",
+      "presenter": "형균",
+      "youtube": "5iPG2TTRmPM"
     },
     {
-      "no": 13,
-      "date": "2026-09-03",
-      "title": "옵저버빌리티: 로그, 메트릭, 트레이싱",
-      "presenter": "미정",
-      "youtube": null
-    },
-    {
-      "no": 14,
-      "date": "2026-09-10",
-      "title": "온콜 회고: 장애에서 배운 것",
-      "presenter": "수양",
-      "youtube": null
+      "no": 12,
+      "date": "2026-08-02",
+      "title": "[미니테코톡] 프론트엔드 에러 처리",
+      "presenter": "소정",
+      "youtube": "7G700BsYYFE"
     }
   ]
 }
