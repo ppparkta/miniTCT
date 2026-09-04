@@ -24,6 +24,16 @@
       "kind": "uranus",
       "texture": "textures/uranus.jpg",
       "glow": "#8FD8E2"
+    },
+    "하은": {
+      "kind": "mars",
+      "texture": "textures/mars.jpg",
+      "glow": "#D97B5A"
+    },
+    "준노": {
+      "kind": "saturn",
+      "texture": "textures/saturn.jpg",
+      "glow": "#D9C08A"
     }
   },
   "sessions": [
@@ -145,6 +155,27 @@
       "title": "[미니테코톡] 프론트엔드 에러 처리",
       "presenter": "소정",
       "youtube": "7G700BsYYFE"
+    },
+    {
+      "no": 13,
+      "date": "2026-08-20",
+      "title": "[미니테코톡] Apache Kafka(1)",
+      "presenter": "형균",
+      "youtube": "p1vfvhJwSjU"
+    },
+    {
+      "no": 13,
+      "date": "2026-08-20",
+      "title": "[미니테코톡] 자바스크립트는 한 번에 하나만 실행하는데, 어떻게 여러 작업을 처리할까?",
+      "presenter": "소정",
+      "youtube": "d6B1wCfNIhc"
+    },
+    {
+      "no": 13,
+      "date": "2026-08-20",
+      "title": "[미니테코톡] JavaScript는 싱글 스레드인데 왜 레이스 컨디션이 발생할까?",
+      "presenter": "창준",
+      "youtube": "DzVnAqzQ9WI"
     }
   ]
 }
