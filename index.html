@@ -447,8 +447,9 @@ controls.dampingFactor = .07;
 controls.enablePan = false;
 controls.zoomToCursor = false;    // 커서가 아니라 항상 계의 중심을 기준으로 확대
 controls.zoomSpeed = 1.1;
-controls.minDistance = 9;
-controls.maxDistance = 260;
+controls.minDistance = 13;   // 태양 반지름(8.5)보다 커야 카메라가 태양 안으로 들어가지 않는다
+const MAX_DIST = 260;             // 손으로 줌아웃할 수 있는 기본 한계
+controls.maxDistance = MAX_DIST;
 controls.minPolarAngle = .1;
 controls.maxPolarAngle = 1.54;
 
@@ -565,7 +566,7 @@ function glowTexture(glow, inner, midAlpha){
 
 /* 태양 */
 const sun = new THREE.Mesh(GEO.sphere, new THREE.MeshBasicMaterial({ color: 0xFFC978 }));
-sun.scale.setScalar(6);
+sun.scale.setScalar(8.5);
 sun.matrixAutoUpdate = false; sun.updateMatrix();
 scene.add(sun);
 {
@@ -581,7 +582,7 @@ scene.add(sun);
   map.colorSpace = THREE.SRGBColorSpace;
   const glow = new THREE.Sprite(new THREE.SpriteMaterial({
     map, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false }));
-  glow.scale.set(46, 46, 1);
+  glow.scale.set(58, 58, 1);
   scene.add(glow);
 }
 
@@ -819,8 +820,23 @@ $("holdBtn").addEventListener("click", e => {
 });
 
 let flyTo = null;
+/* 위에서 볼 때 가장 바깥 궤도가 화면에 다 들어오는 거리.
+   고정 배율로는 창 비율에 따라 잘리므로 fov에서 거꾸로 구한다.
+   세로가 기준이지만 세로로 긴 창에서는 가로가 먼저 좁아진다. */
+function topDistance(){
+  const halfV = Math.tan(camera.fov * Math.PI / 360);
+  return RMAX * 1.12 / (halfV * Math.min(1, camera.aspect));
+}
+/* 세로로 긴 창에서는 계를 다 담으려면 기본 한계보다 더 멀어야 한다.
+   한계를 올려두지 않으면 컨트롤이 카메라를 되당겨 궤도가 잘린다. */
+function syncMaxDistance(){
+  controls.maxDistance = Math.max(MAX_DIST, topDistance());
+}
+syncMaxDistance();
 $("topBtn").addEventListener("click", () => {
-  flyTo = { pos: new THREE.Vector3(0, RMAX * 1.85, 0.1), t: 0 };
+  const d = topDistance();
+  const phi = controls.minPolarAngle;              // 컨트롤이 되밀지 않는 각도로 맞춘다
+  flyTo = { pos: new THREE.Vector3(0, d * Math.cos(phi), d * Math.sin(phi)), t: 0 };
   dirty = true;
 });
 
@@ -899,6 +915,7 @@ bodies.forEach(b => {
 addEventListener("resize", () => {
   camera.aspect = innerWidth / innerHeight;
   camera.updateProjectionMatrix();
+  syncMaxDistance();
   renderer.setSize(innerWidth, innerHeight);
   dirty = true;
 });
