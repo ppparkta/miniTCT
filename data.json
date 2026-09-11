@@ -176,6 +176,27 @@
       "title": "[미니테코톡] JavaScript는 싱글 스레드인데 왜 레이스 컨디션이 발생할까?",
       "presenter": "창준",
       "youtube": "DzVnAqzQ9WI"
+    },
+    {
+      "no": 14,
+      "date": "2026-09-11",
+      "title": "[미니테코톡] SSR 캐시 전략을 통한 TTFB 최적화",
+      "presenter": "하은",
+      "youtube": "H01_6Yh3eMI"
+    },
+    {
+      "no": 14,
+      "date": "2026-09-11",
+      "title": "[미니테코톡] 가상 서비스 사례로 배우는 대규모 시스템 설계 기초",
+      "presenter": "준노",
+      "youtube": "Jvnw6oYnoGk"
+    },
+    {
+      "no": 14,
+      "date": "2026-09-11",
+      "title": "[미니테코톡] Session 방식에서 JWT 방식으로 마이그레이션 하기",
+      "presenter": "소정",
+      "youtube": ""
     }
   ]
 }
