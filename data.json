@@ -197,6 +197,27 @@
       "title": "[미니테코톡] Session 방식에서 JWT 방식으로 마이그레이션 하기",
       "presenter": "소정",
       "youtube": "ZIlZjxSouF4"
+    },
+    {
+      "no": 15,
+      "date": "2026-09-22",
+      "title": "[미니테코톡] AI로 어떻게 하면 일관된 디자인을 만들 수 있을까?",
+      "presenter": "창준",
+      "youtube": "CNJWPlgqhYg"
+    },
+    {
+      "no": 15,
+      "date": "2026-09-22",
+      "title": "[미니테코톡] 무중단 배포 중단",
+      "presenter": "수빈",
+      "youtube": "swyhbo0De-E"
+    },
+    {
+      "no": 15,
+      "date": "2026-09-22",
+      "title": "[미니테코톡] Spec-Driven-Development(SDD)",
+      "presenter": "형균",
+      "youtube": "K-pyzFRYlvw"
     }
   ]
 }
