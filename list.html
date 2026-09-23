@@ -121,6 +121,18 @@ button{font:inherit;color:inherit}
 
 /* 발표 목록 */
 .talks .empty{padding:48px 16px;text-align:center;color:var(--lime-dim);letter-spacing:.16em}
+/* 잡음 낀 신호처럼: '지직'은 불규칙하게 깜빡이고 점은 차례로 켜진다 */
+.empty .zz{display:inline-block;animation:zz 2.6s steps(1) infinite}
+@keyframes zz{
+  0%,100%{opacity:1;transform:none} 7%{opacity:.35} 9%{opacity:1;transform:translateX(1px)}
+  11%{opacity:.6;transform:translateX(-1px)} 13%{opacity:1;transform:none}
+  41%{opacity:.5} 43%{opacity:1} 68%{opacity:.3;transform:translateX(1px)} 70%{opacity:1;transform:none}
+}
+.empty .dots i{font-style:normal;animation:blip 1.4s steps(1) infinite}
+.empty .dots i:nth-child(2){animation-delay:.35s}
+.empty .dots i:nth-child(3){animation-delay:.7s}
+@keyframes blip{0%,74%{opacity:0}75%,100%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.empty .zz,.empty .dots i{animation:none}}
 .back{display:none}
 @media (max-width:760px){
   .back{display:inline-flex;align-items:center;gap:6px;color:var(--lime-dim);text-decoration:none;
@@ -194,7 +206,7 @@ button{font:inherit;color:inherit}
           <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M7.5 2L3.5 6l4 4"/></svg>목록
         </a>
       </div>
-      <div id="talks"><p class="empty">지직... 연결 중</p></div>
+      <div id="talks"><p class="empty"><span class="zz">지직</span><span class="dots"><i>.</i><i>.</i><i>.</i></span> 연결 중</p></div>
     </section>
   </div>
 </div>
@@ -303,7 +315,7 @@ function renderTalks(){
   document.body.classList.toggle("detail", cur !== null);
   if (cur === null) {
     $("talkHead").textContent = mode === "round" ? "회차를 고르세요" : "항해자를 고르세요";
-    $("talks").innerHTML = `<p class="empty">지직... 연결 중</p>`;
+    $("talks").innerHTML = `<p class="empty"><span class="zz">지직</span><span class="dots"><i>.</i><i>.</i><i>.</i></span> 연결 중</p>`;
     return;
   }
   const g = cur.kind === "round" ? byNo(cur.no) : byWho(cur.who);
