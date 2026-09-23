@@ -590,9 +590,17 @@ scene.add(sun);
 {
   const n = 2400, pos = new Float32Array(n * 3);
   let seed = 20260827;
-  const rnd = () => (seed = seed * 1103515245 + 12345, ((seed >>> 16) & 0x7fff) / 0x7fff);
+  /* 32비트 정수로 곱해야 한다. 일반 곱셈은 한 번에 Infinity로 넘쳐
+     이후 0만 나오고, 별 전부가 태양 아래 한 점에 쌓인다. */
+  const rnd = () => (seed = (Math.imul(seed, 1103515245) + 12345) >>> 0, ((seed >>> 16) & 0x7fff) / 0x7fff);
+  /* 위에서 내려다보면 별 구체의 아래 극이 태양 바로 뒤에 온다. 거기 있는
+     별은 태양 광휘와 더해져 흰 점으로 도드라지므로 극 주변 24도는 비운다.
+     카메라는 항상 궤도면 위에 있어 그 구역은 태양에 가릴 때만 보인다. */
+  const POLE_GAP = Math.cos(24 * Math.PI / 180);
   for (let i = 0; i < n; i++) {
-    const r = 300 + rnd() * 260, th = rnd() * Math.PI * 2, ph = Math.acos(rnd() * 2 - 1);
+    const r = 300 + rnd() * 260, th = rnd() * Math.PI * 2;
+    let ph;
+    do ph = Math.acos(rnd() * 2 - 1); while (Math.cos(ph) < -POLE_GAP);
     pos[i*3]   = r * Math.sin(ph) * Math.cos(th);
     pos[i*3+1] = r * Math.cos(ph);
     pos[i*3+2] = r * Math.sin(ph) * Math.sin(th);
