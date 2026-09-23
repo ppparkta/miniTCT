@@ -34,6 +34,11 @@
       "kind": "saturn",
       "texture": "textures/saturn.jpg",
       "glow": "#D9C08A"
+    },
+    "희수": {
+      "kind": "neptune",
+      "texture": "textures/neptune.jpg",
+      "glow": "#5C7CE6"
     }
   },
   "sessions": [
