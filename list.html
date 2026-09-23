@@ -93,8 +93,8 @@ button{font:inherit;color:inherit}
 .ph .n{color:var(--lime-dim);letter-spacing:0}
 
 /* 탭: 켜진 쪽만 밝다 */
-.tabs{display:flex;gap:2px;margin:-6px 0}
-.tab{font-size:12px;line-height:1;letter-spacing:.16em;padding:8px 10px;cursor:pointer;
+.tabs{display:flex;gap:2px;margin:-6px 0 -6px -10px}   /* 첫 탭 글자가 행의 첫 열과 같은 x에서 시작 */
+.tab{font-size:12px;line-height:1;padding:8px 10px;cursor:pointer;
   background:none;border:1px solid transparent;border-radius:2px;color:var(--lime-dim);
   transition:color .12s,background .12s}
 .tab:hover{color:var(--lime);background:rgba(184,255,58,.07)}
@@ -105,14 +105,13 @@ button{font:inherit;color:inherit}
 .rounds{position:sticky;top:20px}
 .rounds ol{list-style:none;margin:0;padding:0;max-height:calc(100vh - 140px);overflow:auto}
 .rounds li + li{border-top:1px solid rgba(184,255,58,.12)}
-.rounds a{display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:center;
+.rounds a{display:grid;grid-template-columns:48px 1fr auto;gap:12px;align-items:center;
   padding:11px 16px;text-decoration:none;color:var(--lime-dim);transition:background .12s,color .12s}
 .rounds a:hover{background:rgba(184,255,58,.06);color:var(--lime)}
 .rounds a[aria-current="true"]{background:rgba(184,255,58,.1);color:var(--paper);
   box-shadow:inset 3px 0 0 var(--lime)}
 .rounds .no{font-size:24px;line-height:1;color:inherit}
-.rounds .no.who{font-size:12px;line-height:1.2;word-break:keep-all}
-.rounds li.who a{grid-template-columns:64px 1fr auto}
+.rounds .no.who{font-size:12px;line-height:1.4;word-break:keep-all}
 .rounds .meta{display:grid;line-height:1.6;min-width:0}
 .rounds .meta .d{color:inherit}
 .rounds .meta .w{color:var(--lime-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}

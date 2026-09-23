@@ -169,10 +169,12 @@ body{margin:0;background:var(--deep);color:var(--lime);overflow:hidden;
 .corners span:nth-child(4){bottom:9px;right:9px;border-left:0;border-top:0}
 
 .x{position:absolute;top:16px;right:16px;z-index:4;width:34px;height:34px;border-radius:2px;
+  touch-action:manipulation;
   cursor:pointer;background:rgba(4,16,38,.7);border:1px solid rgba(184,255,58,.4);
   display:grid;place-items:center;padding:0}
 .x svg{width:16px;height:16px;fill:none;stroke:var(--lime);stroke-width:1.6;stroke-linecap:round}
 .x:hover{border-color:var(--lime);box-shadow:0 0 12px rgba(184,255,58,.35)}
+@media (hover:none){.x{width:44px;height:44px;top:12px;right:12px}}   /* 손가락 크기 */
 
 .mstage{position:relative;z-index:2;aspect-ratio:16/9;border-radius:4px;overflow:hidden;
   background:#03101f;border:1px solid rgba(184,255,58,.3);
@@ -830,24 +832,35 @@ const ray = new THREE.Raycaster();
 const ptr = new THREE.Vector2();
 let pending = null, downAt = null, dragged = false;
 
-/* 손가락은 마우스만큼 정확하지 않다. 탭할 때는 중심 말고 주변 네 점도
-   같이 쏘아서 조금 빗나가도 잡히게 한다. */
-const FAT = [[0, 0], [16, 0], [-16, 0], [0, 16], [0, -16]];
-
 function pickAt(x, y, fat){
-  for (const [dx, dy] of (fat ? FAT : [[0, 0]])) {
-    ptr.x = ((x + dx) / innerWidth) * 2 - 1;
-    ptr.y = -((y + dy) / innerHeight) * 2 + 1;
-    ray.setFromCamera(ptr, camera);
-    const hits = ray.intersectObjects(hitMeshes, false);
-    if (hits.length) return hits[0].object.userData.sid;
+  if (fat) return pickNear(x, y, TAP_PX);
+  ptr.x = (x / innerWidth) * 2 - 1;
+  ptr.y = -(y / innerHeight) * 2 + 1;
+  ray.setFromCamera(ptr, camera);
+  const hits = ray.intersectObjects(hitMeshes, false);
+  return hits.length ? hits[0].object.userData.sid : null;
+}
+
+/* 손가락은 마우스만큼 정확하지 않고, 폰에서는 행성이 몇 픽셀밖에 안 된다.
+   레이캐스트 대신 모든 행성을 화면에 투영해 손가락에서 가장 가까운 것을
+   고른다. 행성이 겹쳐 있어도 가까운 쪽이 잡힌다. */
+const TAP_PX = 28;
+const scr = new THREE.Vector3();
+function pickNear(x, y, maxPx){
+  let best = null, bestD = maxPx * maxPx;
+  for (const rec of bodies) {
+    rec.planet.getWorldPosition(scr).project(camera);
+    if (scr.z > 1) continue;                                   // 카메라 뒤
+    const sx = (scr.x + 1) / 2 * innerWidth, sy = (1 - scr.y) / 2 * innerHeight;
+    const d = (sx - x) ** 2 + (sy - y) ** 2;
+    if (d < bestD) { bestD = d; best = rec.sid; }
   }
-  return null;
+  return best;
 }
 
 const isTouch = ev => ev.pointerType === "touch" || ev.pointerType === "pen";
 /* 터치는 손가락이 크게 흔들리므로 드래그 판정 기준을 넉넉하게 둔다 */
-const slop = ev => isTouch(ev) ? 14 : 4;
+const slop = ev => isTouch(ev) ? 18 : 4;
 
 canvas.addEventListener("pointermove", ev => {
   if (downAt && (Math.abs(ev.clientX - downAt.x) > slop(ev) ||
@@ -977,7 +990,8 @@ function close(){
   lastFocus?.focus?.();
   dirty = true;
 }
-$("modal").addEventListener("click", e => { if (e.target.dataset.close !== undefined) close(); });
+/* 버튼 안의 svg를 누르면 target이 svg라 dataset이 없다. 조상까지 올라가 본다 */
+$("modal").addEventListener("click", e => { if (e.target.closest("[data-close]")) close(); });
 document.addEventListener("keydown", e => { if (e.key === "Escape" && modalOpen) close(); });
 
 /* 재생하면 수신 완료로 기록한다. 궤도선이 실선으로 바뀌고 행성 색이 살아난다. */
