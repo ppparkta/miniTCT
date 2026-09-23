@@ -61,7 +61,7 @@ body{margin:0;background:var(--deep);color:var(--lime);overflow:hidden;
 .ctl{display:flex;align-items:center;gap:8px;
   font-family:var(--f);font-size:12px;line-height:1;
   padding:9px 12px;cursor:pointer;
-  background:none;border:0;border-radius:0;color:var(--lime-dim);
+  background:none;border:0;border-radius:0;color:var(--lime-dim);text-decoration:none;
   transition:color .12s,background .12s}
 .ctl + .ctl{border-left:1px solid rgba(107,158,46,.5)}
 .ctl:hover{color:var(--lime);background:rgba(184,255,58,.07)}
@@ -226,6 +226,11 @@ body{margin:0;background:var(--deep);color:var(--lime);overflow:hidden;
         <circle cx="6" cy="6" r="4.6"/><circle cx="6" cy="6" r="1.1"/>
       </svg><span>위에서 보기</span>
     </button>
+    <a class="ctl" href="list.html">
+      <svg viewBox="0 0 12 12" aria-hidden="true">
+        <path d="M2 3h8M2 6h8M2 9h8"/>
+      </svg><span>목록으로 보기</span>
+    </a>
   </div>
 </div>
 <div class="hud bc"><p class="readout" id="readout"></p></div>

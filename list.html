@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>미니테코톡 · 회차 목록</title>
+<meta name="description" content="미니테코톡 회차별 발표 녹화 목록">
+
+<link rel="preload" href="fonts/Galmuri11.woff2" as="font" type="font/woff2" crossorigin>
+
+<style>
+/* index.html과 같은 폰트·색. 픽셀 폰트라 12px과 24px만 쓴다 */
+@font-face{
+  font-family:Galmuri11;
+  font-style:normal;font-weight:400;font-display:swap;
+  src:local('Galmuri11 Regular'), url('fonts/Galmuri11.woff2') format('woff2');
+}
+:root{
+  --deep:#05070F;
+  --panel-hi:#14559A;
+  --panel-mid:#0A2E5C;
+  --panel-lo:#061630;
+  --lime:#B8FF3A;
+  --lime-2:#93E524;
+  --lime-dim:#6B9E2E;
+  --paper:#E4FFC0;
+  --line:rgba(184,255,58,.28);
+  --f:"Galmuri11",ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html{background:var(--deep)}
+body{margin:0;min-height:100vh;background:var(--deep);color:var(--lime);
+  font-family:var(--f);font-size:12px;line-height:1.8;
+  -webkit-font-smoothing:none;font-smooth:never;text-rendering:geometricPrecision;
+  -webkit-tap-highlight-color:transparent}
+a{color:inherit}
+button{font:inherit;color:inherit}
+[hidden]{display:none !important}
+
+/* 별 배경: 화면 고정 */
+.sky{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(1px 1px at 12% 18%, rgba(233,238,249,.8) 50%, transparent 51%),
+    radial-gradient(1px 1px at 78% 9%,  rgba(233,238,249,.7) 50%, transparent 51%),
+    radial-gradient(1px 1px at 33% 71%, rgba(233,238,249,.6) 50%, transparent 51%),
+    radial-gradient(1px 1px at 91% 58%, rgba(233,238,249,.7) 50%, transparent 51%),
+    radial-gradient(1px 1px at 57% 37%, rgba(233,238,249,.5) 50%, transparent 51%),
+    radial-gradient(1px 1px at 5% 88%,  rgba(233,238,249,.6) 50%, transparent 51%),
+    radial-gradient(1px 1px at 68% 84%, rgba(233,238,249,.7) 50%, transparent 51%),
+    radial-gradient(1px 1px at 45% 6%,  rgba(233,238,249,.5) 50%, transparent 51%),
+    radial-gradient(1px 1px at 24% 46%, rgba(233,238,249,.6) 50%, transparent 51%),
+    radial-gradient(1px 1px at 86% 33%, rgba(233,238,249,.5) 50%, transparent 51%)}
+
+.wrap{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:24px 20px 60px}
+
+/* 상단: 제목 + 계기 패널 */
+.top{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  margin-bottom:24px}
+.top h1{margin:0;font-size:24px;line-height:1.4;color:var(--paper);
+  text-shadow:0 0 8px rgba(184,255,58,.55),0 0 20px rgba(184,255,58,.2)}
+.top h1 small{display:block;font-size:12px;line-height:1.6;color:var(--lime-dim);text-shadow:none;
+  letter-spacing:.16em}
+.rack{display:flex;background:#07162C;border:1px solid var(--lime-dim);
+  box-shadow:0 2px 0 rgba(0,0,0,.5)}
+.ctl{display:flex;align-items:center;gap:8px;font-size:12px;line-height:1;padding:9px 12px;
+  cursor:pointer;background:none;border:0;border-radius:0;color:var(--lime-dim);text-decoration:none;
+  transition:color .12s,background .12s}
+.ctl + .ctl{border-left:1px solid rgba(107,158,46,.5)}
+.ctl:hover{color:var(--lime);background:rgba(184,255,58,.07)}
+.ctl:focus-visible{outline:1px solid var(--lime);outline-offset:-3px}
+.ctl svg{flex:none;width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:1.4;
+  stroke-linecap:round;stroke-linejoin:round}
+
+/* 본문: 왼쪽 회차, 오른쪽 발표 */
+.cols{display:grid;grid-template-columns:300px 1fr;gap:20px;align-items:start}
+@media (max-width:760px){
+  .cols{grid-template-columns:1fr}
+  /* 좁은 화면은 한 번에 한 칸만. 해시가 있으면 발표, 없으면 회차 */
+  body.detail .rounds{display:none}
+  body:not(.detail) .talks{display:none}
+}
+
+.panel{position:relative;border:1px solid var(--line);border-radius:6px;overflow:hidden;
+  background:
+    radial-gradient(130% 100% at 50% -12%, rgba(64,158,240,.22), transparent 62%),
+    linear-gradient(180deg, rgba(20,85,154,.45) 0%, rgba(10,46,92,.55) 46%, rgba(6,22,48,.7) 100%);
+  box-shadow:0 0 30px rgba(184,255,58,.08),inset 0 0 70px rgba(4,14,34,.5)}
+.panel::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(180deg, rgba(2,10,24,.22) 0 1px, transparent 1px 3px)}
+.panel > *{position:relative}
+.ph{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:12px 16px;border-bottom:1px solid var(--line);letter-spacing:.16em;color:var(--lime)}
+.ph .n{color:var(--lime-dim);letter-spacing:0}
+
+/* 회차 목록 */
+.rounds{position:sticky;top:20px}
+.rounds ol{list-style:none;margin:0;padding:0;max-height:calc(100vh - 140px);overflow:auto}
+.rounds li + li{border-top:1px solid rgba(184,255,58,.12)}
+.rounds a{display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:center;
+  padding:11px 16px;text-decoration:none;color:var(--lime-dim);transition:background .12s,color .12s}
+.rounds a:hover{background:rgba(184,255,58,.06);color:var(--lime)}
+.rounds a[aria-current="true"]{background:rgba(184,255,58,.1);color:var(--paper);
+  box-shadow:inset 3px 0 0 var(--lime)}
+.rounds .no{font-size:24px;line-height:1;color:inherit}
+.rounds .meta{display:grid;line-height:1.6;min-width:0}
+.rounds .meta .d{color:inherit}
+.rounds .meta .w{color:var(--lime-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rounds a[aria-current="true"] .meta .w{color:var(--lime-2)}
+.rounds .led{width:6px;height:6px;background:#0B2417;border:1px solid rgba(107,158,46,.75)}
+.rounds .led.on{background:var(--lime);border-color:var(--lime);box-shadow:0 0 7px rgba(184,255,58,.9)}
+
+/* 발표 목록 */
+.talks .empty{padding:48px 16px;text-align:center;color:var(--lime-dim);letter-spacing:.16em}
+.back{display:none}
+@media (max-width:760px){
+  .back{display:inline-flex;align-items:center;gap:6px;color:var(--lime-dim);text-decoration:none;
+    white-space:nowrap;flex:none}
+  .back:hover{color:var(--lime)}
+  .back svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:1.4;stroke-linecap:round}
+}
+.talks ul{list-style:none;margin:0;padding:8px}
+.talk{display:grid;grid-template-columns:200px 1fr;gap:16px;padding:12px 8px;align-items:start}
+.talk + .talk{border-top:1px solid rgba(184,255,58,.12)}
+@media (max-width:560px){.talk{grid-template-columns:1fr}}
+.stage{position:relative;aspect-ratio:16/9;border-radius:4px;overflow:hidden;background:#03101f;
+  border:1px solid rgba(184,255,58,.3);box-shadow:0 0 22px rgba(184,255,58,.1),inset 0 0 30px rgba(4,14,34,.7)}
+.stage img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;
+  filter:contrast(1.06) saturate(1.04)}
+.stage .lines{position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(180deg, rgba(2,10,24,.3) 0 1px, transparent 1px 3px)}
+.stage iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.stage .play{position:absolute;inset:0;width:100%;height:100%;display:grid;place-items:center;
+  cursor:pointer;padding:0;background:none;border:0}
+.stage .play span{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;
+  background:rgba(4,16,38,.6);border:1px solid var(--lime);box-shadow:0 0 18px rgba(184,255,58,.4);
+  transition:background .15s,box-shadow .15s}
+.stage .play:hover span{background:var(--lime);box-shadow:0 0 26px rgba(184,255,58,.7)}
+.stage .play svg{width:16px;height:16px;fill:var(--lime);margin-left:2px;transition:fill .15s}
+.stage .play:hover svg{fill:#04101F}
+.stage .none{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:6px}
+.stage .none .g{font-size:24px;line-height:1;color:rgba(184,255,58,.22)}
+.stage .none .s{letter-spacing:.16em;color:var(--lime-dim)}
+.talk .ttl{margin:0;font-size:12px;line-height:1.8;color:var(--paper);word-break:keep-all}
+.talk .who{margin:2px 0 0;color:var(--lime-2)}
+.talk .out{display:inline-block;margin-top:10px;font-size:12px;line-height:1;color:var(--lime);
+  text-decoration:none;padding:7px 11px;border-radius:3px;border:1px solid rgba(184,255,58,.45);
+  background:rgba(184,255,58,.07);transition:background .15s,box-shadow .15s}
+.talk .out:hover{background:rgba(184,255,58,.16);box-shadow:0 0 16px rgba(184,255,58,.35)}
+
+.err{padding:40px 16px;text-align:center;color:var(--paper)}
+.err code{background:rgba(184,255,58,.12);padding:2px 6px}
+</style>
+</head>
+<body>
+<div class="sky" aria-hidden="true"></div>
+<div class="wrap">
+  <header class="top">
+    <h1>미니테코톡<small>회차별 발표 목록</small></h1>
+    <nav class="rack" aria-label="보기 전환">
+      <a class="ctl" href="index.html">
+        <svg viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4.6"/><circle cx="6" cy="6" r="1.1"/></svg>
+        <span>우주로 보기</span>
+      </a>
+    </nav>
+  </header>
+
+  <div class="cols">
+    <section class="panel rounds" aria-label="회차">
+      <div class="ph"><span>회차</span><span class="n" id="roundCount"></span></div>
+      <ol id="rounds"></ol>
+    </section>
+    <section class="panel talks" aria-label="발표" aria-live="polite">
+      <div class="ph">
+        <span id="talkHead">회차를 고르세요</span>
+        <a class="back" href="#" id="back">
+          <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M7.5 2L3.5 6l4 4"/></svg>회차 목록
+        </a>
+      </div>
+      <div id="talks"><p class="empty">왼쪽에서 회차를 고르면 발표가 나옵니다</p></div>
+    </section>
+  </div>
+</div>
+
+<script type="module">
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+const pad = n => String(n).padStart(2, "0");
+const DAY = "일월화수목금토";
+const fmtDate = iso => { const d = new Date(iso + "T00:00:00"); return isNaN(d) ? iso : `${iso} (${DAY[d.getDay()]})`; };
+const isSoon = s => !s.youtube && new Date(s.date) > new Date();
+const thumb = (id, size) => `https://i.ytimg.com/vi/${id}/${size}.jpg`;
+
+/* 우주 페이지와 같은 키. 여기서 재생해도 저쪽 궤도선이 실선이 된다 */
+const KEY = "study-voyage-recv";
+const store = {
+  read(){ try { return new Set(JSON.parse(localStorage.getItem(KEY) || "[]")); } catch { return new Set(); } },
+  write(s){ try { localStorage.setItem(KEY, JSON.stringify([...s])); } catch {} }
+};
+const recv = store.read();
+
+let ROUNDS = [];
+try {
+  const r = await fetch("data.json", { cache: "no-cache" });
+  if (!r.ok) throw new Error(`data.json HTTP ${r.status}`);
+  const d = await r.json();
+  const nos = [...new Set(d.sessions.map(s => s.no))].sort((a, b) => b - a);   // 최신 회차 먼저
+  ROUNDS = nos.map(no => ({ no, list: d.sessions.filter(s => s.no === no) }));
+} catch (err) {
+  $("rounds").innerHTML = `<li class="err">data.json을 불러오지 못했습니다<br><code>${esc(err.message)}</code></li>`;
+  throw err;
+}
+
+const byNo = no => ROUNDS.find(r => r.no === no);
+const current = () => { const n = parseInt(location.hash.slice(1), 10); return byNo(n) ? n : null; };
+
+function renderRounds(){
+  const cur = current();
+  $("roundCount").textContent = `${ROUNDS.length}회`;
+  $("rounds").innerHTML = ROUNDS.map(r => `
+    <li><a href="#${r.no}" aria-current="${r.no === cur}">
+      <span class="no">${pad(r.no)}</span>
+      <span class="meta">
+        <span class="d">${esc(fmtDate(r.list[0].date))}</span>
+        <span class="w">${esc(r.list.map(s => s.presenter).join(" · "))}</span>
+      </span>
+      <span class="led${recv.has(r.no) ? " on" : ""}" title="${recv.has(r.no) ? "수신 완료" : "미수신"}"></span>
+    </a></li>`).join("");
+}
+
+function stageHtml(s){
+  if (!s.youtube) return `<span class="none"><span class="g">${pad(s.no)}</span>
+    <span class="s">${isSoon(s) ? "예정" : "신호 없음"}</span></span>`;
+  return `<img alt="" src="${thumb(s.youtube, "maxresdefault")}"
+      onerror="this.onerror=null;this.src='${thumb(s.youtube, "mqdefault")}'">
+    <span class="lines"></span>
+    <button class="play" type="button" aria-label="재생" data-yt="${esc(s.youtube)}" data-no="${s.no}">
+      <span><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span></button>`;
+}
+
+function renderTalks(){
+  const cur = current();
+  document.body.classList.toggle("detail", cur !== null);
+  if (cur === null) {
+    $("talkHead").textContent = "회차를 고르세요";
+    $("talks").innerHTML = `<p class="empty">왼쪽에서 회차를 고르면 발표가 나옵니다</p>`;
+    return;
+  }
+  const r = byNo(cur);
+  $("talkHead").textContent = `${cur}회차 · ${fmtDate(r.list[0].date)}`;
+  $("talks").innerHTML = `<ul>${r.list.map(s => `
+    <li class="talk">
+      <div class="stage">${stageHtml(s)}</div>
+      <div>
+        <h2 class="ttl">${esc(s.title)}</h2>
+        <p class="who">항해자 ${esc(s.presenter)}</p>
+        ${s.youtube ? `<a class="out" href="https://youtu.be/${esc(s.youtube)}" target="_blank" rel="noopener">유튜브에서 열기</a>` : ""}
+      </div>
+    </li>`).join("")}</ul>`;
+}
+
+/* 재생 버튼: 그 자리에서 iframe으로 바꾸고 수신 완료로 기록 */
+$("talks").addEventListener("click", e => {
+  const btn = e.target.closest(".play");
+  if (!btn) return;
+  const stage = btn.closest(".stage");
+  const title = btn.closest(".talk").querySelector(".ttl").textContent;
+  stage.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${btn.dataset.yt}?autoplay=1&rel=0"
+    title="${esc(title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture"
+    allowfullscreen></iframe>`;
+  const no = Number(btn.dataset.no);
+  if (!recv.has(no)) { recv.add(no); store.write(recv); renderRounds(); }
+});
+
+$("back").addEventListener("click", e => { e.preventDefault(); history.pushState(null, "", location.pathname); render(); });
+addEventListener("hashchange", render);
+
+function render(){ renderRounds(); renderTalks(); }
+render();
+</script>
+</body>
+</html>
