@@ -194,7 +194,7 @@ button{font:inherit;color:inherit}
           <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M7.5 2L3.5 6l4 4"/></svg>목록
         </a>
       </div>
-      <div id="talks"><p class="empty">왼쪽에서 회차를 고르면 발표가 나옵니다</p></div>
+      <div id="talks"><p class="empty">지직... 연결 중</p></div>
     </section>
   </div>
 </div>
@@ -303,7 +303,7 @@ function renderTalks(){
   document.body.classList.toggle("detail", cur !== null);
   if (cur === null) {
     $("talkHead").textContent = mode === "round" ? "회차를 고르세요" : "항해자를 고르세요";
-    $("talks").innerHTML = `<p class="empty">왼쪽에서 ${mode === "round" ? "회차" : "항해자"}를 고르면 발표가 나옵니다</p>`;
+    $("talks").innerHTML = `<p class="empty">지직... 연결 중</p>`;
     return;
   }
   const g = cur.kind === "round" ? byNo(cur.no) : byWho(cur.who);
