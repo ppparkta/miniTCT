@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>미니테코톡 · 발표 목록</title>
+<title>미니테코톡 · 항해 목록</title>
 <meta name="description" content="미니테코톡 회차별 발표 녹화 목록">
 
 <link rel="preload" href="fonts/Galmuri11.woff2" as="font" type="font/woff2" crossorigin>
@@ -167,11 +167,11 @@ button{font:inherit;color:inherit}
 <div class="sky" aria-hidden="true"></div>
 <div class="wrap">
   <header class="top">
-    <h1>미니테코톡<small>발표 목록</small></h1>
+    <h1>미니테코톡<small>항해 목록</small></h1>
     <nav class="rack" aria-label="보기 전환">
       <a class="ctl" href="index.html">
         <svg viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4.6"/><circle cx="6" cy="6" r="1.1"/></svg>
-        <span>우주로 보기</span>
+        <span>우주로 가기</span>
       </a>
     </nav>
   </header>
@@ -280,7 +280,7 @@ function renderRounds(){
       <li class="who"><a href="#${encodeURIComponent(w.who)}" aria-current="${cur?.kind === "who" && w.who === cur.who}">
         <span class="no who">${esc(w.who)}</span>
         <span class="meta">
-          <span class="d">${latest ? `발표 ${w.list.length}` : "첫 항해 준비 중"}</span>
+          <span class="d">${latest ? `항해 ${w.list.length}` : "첫 항해 준비 중"}</span>
           <span class="w">${latest ? `최근 ${latest.no}회차 · ${esc(latest.date)}` : "아직 발표 없음"}</span>
         </span>
         <span class="led${all ? " on" : ""}" title="${all ? "전부 수신" : "미수신 있음"}"></span>
@@ -309,9 +309,9 @@ function renderTalks(){
   const g = cur.kind === "round" ? byNo(cur.no) : byWho(cur.who);
   $("talkHead").textContent = cur.kind === "round"
     ? `${cur.no}회차 · ${fmtDate(g.list[0].date)}`
-    : `항해자 ${cur.who} · 발표 ${g.list.length}`;
+    : `항해자 ${cur.who} · 항해 ${g.list.length}`;
   if (!g.list.length) {
-    $("talks").innerHTML = `<p class="empty">아직 발표가 없습니다<br>첫 항해를 기다리는 중</p>`;
+    $("talks").innerHTML = `<p class="empty">첫 항해를 기다리는 중</p>`;
     return;
   }
   $("talks").innerHTML = `<ul>${g.list.map(s => `
