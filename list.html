@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>미니테코톡 · 회차 목록</title>
+<title>미니테코톡 · 발표 목록</title>
 <meta name="description" content="미니테코톡 회차별 발표 녹화 목록">
 
 <link rel="preload" href="fonts/Galmuri11.woff2" as="font" type="font/woff2" crossorigin>
@@ -92,6 +92,15 @@ button{font:inherit;color:inherit}
   padding:12px 16px;border-bottom:1px solid var(--line);letter-spacing:.16em;color:var(--lime)}
 .ph .n{color:var(--lime-dim);letter-spacing:0}
 
+/* 탭: 켜진 쪽만 밝다 */
+.tabs{display:flex;gap:2px;margin:-6px 0}
+.tab{font-size:12px;line-height:1;letter-spacing:.16em;padding:8px 10px;cursor:pointer;
+  background:none;border:1px solid transparent;border-radius:2px;color:var(--lime-dim);
+  transition:color .12s,background .12s}
+.tab:hover{color:var(--lime);background:rgba(184,255,58,.07)}
+.tab[aria-selected="true"]{color:var(--paper);border-color:rgba(184,255,58,.45);background:rgba(184,255,58,.1)}
+.tab:focus-visible{outline:1px solid var(--lime);outline-offset:-3px}
+
 /* 회차 목록 */
 .rounds{position:sticky;top:20px}
 .rounds ol{list-style:none;margin:0;padding:0;max-height:calc(100vh - 140px);overflow:auto}
@@ -102,6 +111,8 @@ button{font:inherit;color:inherit}
 .rounds a[aria-current="true"]{background:rgba(184,255,58,.1);color:var(--paper);
   box-shadow:inset 3px 0 0 var(--lime)}
 .rounds .no{font-size:24px;line-height:1;color:inherit}
+.rounds .no.who{font-size:12px;line-height:1.2;word-break:keep-all}
+.rounds li.who a{grid-template-columns:64px 1fr auto}
 .rounds .meta{display:grid;line-height:1.6;min-width:0}
 .rounds .meta .d{color:inherit}
 .rounds .meta .w{color:var(--lime-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -140,6 +151,7 @@ button{font:inherit;color:inherit}
 .stage .none{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:6px}
 .stage .none .g{font-size:48px;line-height:1;color:rgba(184,255,58,.22)}
 .stage .none .s{letter-spacing:.16em;color:var(--lime-dim)}
+.talk .ep{display:block;margin-bottom:8px;letter-spacing:.16em;color:var(--lime)}
 .talk .ttl{margin:0;font-size:24px;line-height:1.5;color:var(--paper);word-break:keep-all;
   text-shadow:0 0 10px rgba(184,255,58,.45),0 0 26px rgba(184,255,58,.18)}
 .talk .who{margin:10px 0 0;color:var(--lime-2)}
@@ -156,7 +168,7 @@ button{font:inherit;color:inherit}
 <div class="sky" aria-hidden="true"></div>
 <div class="wrap">
   <header class="top">
-    <h1>미니테코톡<small>회차별 발표 목록</small></h1>
+    <h1>미니테코톡<small>발표 목록</small></h1>
     <nav class="rack" aria-label="보기 전환">
       <a class="ctl" href="index.html">
         <svg viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4.6"/><circle cx="6" cy="6" r="1.1"/></svg>
@@ -166,15 +178,21 @@ button{font:inherit;color:inherit}
   </header>
 
   <div class="cols">
-    <section class="panel rounds" aria-label="회차">
-      <div class="ph"><span>회차</span><span class="n" id="roundCount"></span></div>
+    <section class="panel rounds" aria-label="목록">
+      <div class="ph">
+        <div class="tabs" role="tablist" aria-label="묶는 기준">
+          <button class="tab" type="button" role="tab" id="tabRound" data-mode="round" aria-selected="true">회차별</button>
+          <button class="tab" type="button" role="tab" id="tabWho" data-mode="who" aria-selected="false">항해자별</button>
+        </div>
+        <span class="n" id="roundCount"></span>
+      </div>
       <ol id="rounds"></ol>
     </section>
     <section class="panel talks" aria-label="발표" aria-live="polite">
       <div class="ph">
         <span id="talkHead">회차를 고르세요</span>
         <a class="back" href="#" id="back">
-          <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M7.5 2L3.5 6l4 4"/></svg>회차 목록
+          <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M7.5 2L3.5 6l4 4"/></svg>목록
         </a>
       </div>
       <div id="talks"><p class="empty">왼쪽에서 회차를 고르면 발표가 나옵니다</p></div>
@@ -199,33 +217,75 @@ const store = {
 };
 const recv = store.read();
 
-let ROUNDS = [];
+let ROUNDS = [], WHOS = [];
 try {
   const r = await fetch("data.json", { cache: "no-cache" });
   if (!r.ok) throw new Error(`data.json HTTP ${r.status}`);
   const d = await r.json();
   const nos = [...new Set(d.sessions.map(s => s.no))].sort((a, b) => b - a);   // 최신 회차 먼저
   ROUNDS = nos.map(no => ({ no, list: d.sessions.filter(s => s.no === no) }));
+  const names = [...new Set(d.sessions.map(s => s.presenter))];
+  WHOS = names.map(who => ({
+    who,
+    list: d.sessions.filter(s => s.presenter === who).sort((a, b) => b.no - a.no)   // 최신 발표 먼저
+  })).sort((a, b) => b.list.length - a.list.length || a.who.localeCompare(b.who, "ko"));
 } catch (err) {
   $("rounds").innerHTML = `<li class="err">data.json을 불러오지 못했습니다<br><code>${esc(err.message)}</code></li>`;
   throw err;
 }
 
 const byNo = no => ROUNDS.find(r => r.no === no);
-const current = () => { const n = parseInt(location.hash.slice(1), 10); return byNo(n) ? n : null; };
+const byWho = who => WHOS.find(w => w.who === who);
+/* 해시가 숫자면 회차, 그 밖이면 항해자 이름 */
+function current(){
+  let h = ""; try { h = decodeURIComponent(location.hash.slice(1)); } catch { return null; }
+  if (!h) return null;
+  if (/^\d+$/.test(h)) return byNo(+h) ? { kind: "round", no: +h } : null;
+  return byWho(h) ? { kind: "who", who: h } : null;
+}
+let mode = "round";                                   // 해시가 없을 때 왼쪽에 보일 묶음
+
+function setMode(m){
+  mode = m;
+  history.pushState(null, "", location.pathname);     // 묶음을 바꾸면 고른 항목은 푼다
+  render();
+}
+$("tabRound").addEventListener("click", () => setMode("round"));
+$("tabWho").addEventListener("click", () => setMode("who"));
 
 function renderRounds(){
   const cur = current();
-  $("roundCount").textContent = `${ROUNDS.length}회`;
-  $("rounds").innerHTML = ROUNDS.map(r => `
-    <li><a href="#${r.no}" aria-current="${r.no === cur}">
-      <span class="no">${pad(r.no)}</span>
-      <span class="meta">
-        <span class="d">${esc(fmtDate(r.list[0].date))}</span>
-        <span class="w">${esc(r.list.map(s => s.presenter).join(" · "))}</span>
-      </span>
-      <span class="led${recv.has(r.no) ? " on" : ""}" title="${recv.has(r.no) ? "수신 완료" : "미수신"}"></span>
-    </a></li>`).join("");
+  if (cur) mode = cur.kind;
+  $("tabRound").setAttribute("aria-selected", mode === "round");
+  $("tabWho").setAttribute("aria-selected", mode === "who");
+
+  if (mode === "round") {
+    $("roundCount").textContent = `${ROUNDS.length}회`;
+    $("rounds").innerHTML = ROUNDS.map(r => `
+      <li><a href="#${r.no}" aria-current="${cur?.kind === "round" && r.no === cur.no}">
+        <span class="no">${pad(r.no)}</span>
+        <span class="meta">
+          <span class="d">${esc(fmtDate(r.list[0].date))}</span>
+          <span class="w">${esc(r.list.map(s => s.presenter).join(" · "))}</span>
+        </span>
+        <span class="led${recv.has(r.no) ? " on" : ""}" title="${recv.has(r.no) ? "수신 완료" : "미수신"}"></span>
+      </a></li>`).join("");
+    return;
+  }
+  $("roundCount").textContent = `${WHOS.length}명`;
+  $("rounds").innerHTML = WHOS.map(w => {
+    const latest = w.list[0];
+    const all = w.list.every(s => recv.has(s.no));
+    return `
+      <li class="who"><a href="#${encodeURIComponent(w.who)}" aria-current="${cur?.kind === "who" && w.who === cur.who}">
+        <span class="no who">${esc(w.who)}</span>
+        <span class="meta">
+          <span class="d">발표 ${w.list.length}</span>
+          <span class="w">최근 ${latest.no}회차 · ${esc(latest.date)}</span>
+        </span>
+        <span class="led${all ? " on" : ""}" title="${all ? "전부 수신" : "미수신 있음"}"></span>
+      </a></li>`;
+  }).join("");
 }
 
 function stageHtml(s){
@@ -242,16 +302,19 @@ function renderTalks(){
   const cur = current();
   document.body.classList.toggle("detail", cur !== null);
   if (cur === null) {
-    $("talkHead").textContent = "회차를 고르세요";
-    $("talks").innerHTML = `<p class="empty">왼쪽에서 회차를 고르면 발표가 나옵니다</p>`;
+    $("talkHead").textContent = mode === "round" ? "회차를 고르세요" : "항해자를 고르세요";
+    $("talks").innerHTML = `<p class="empty">왼쪽에서 ${mode === "round" ? "회차" : "항해자"}를 고르면 발표가 나옵니다</p>`;
     return;
   }
-  const r = byNo(cur);
-  $("talkHead").textContent = `${cur}회차 · ${fmtDate(r.list[0].date)}`;
-  $("talks").innerHTML = `<ul>${r.list.map(s => `
+  const g = cur.kind === "round" ? byNo(cur.no) : byWho(cur.who);
+  $("talkHead").textContent = cur.kind === "round"
+    ? `${cur.no}회차 · ${fmtDate(g.list[0].date)}`
+    : `항해자 ${cur.who} · 발표 ${g.list.length}`;
+  $("talks").innerHTML = `<ul>${g.list.map(s => `
     <li class="talk">
       <div class="stage">${stageHtml(s)}</div>
       <div>
+        ${cur.kind === "who" ? `<span class="ep">${s.no}회차 · ${esc(fmtDate(s.date))}</span>` : ""}
         <h2 class="ttl">${esc(s.title)}</h2>
         <p class="who">항해자 ${esc(s.presenter)}</p>
         ${s.youtube ? `<a class="out" href="https://youtu.be/${esc(s.youtube)}" target="_blank" rel="noopener">유튜브에서 열기</a>` : ""}
