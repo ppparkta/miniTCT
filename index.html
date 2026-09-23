@@ -615,15 +615,28 @@ const ORBITS = [...new Set(SESSIONS.map(s => s.no))]
   .sort((a, b) => a - b)
   .map(no => ({ no, list: SESSIONS.filter(s => s.no === no) }));
 const N = ORBITS.length;
-const STEP = N > 1 ? (RMAX - R0) / (N - 1) : 0;
-/* 행성 반지름은 궤도 간격에 비례한다. 회차가 늘어 간격이 좁아지면
-   행성도 같이 작아져 이웃 궤도를 침범하지 않는다. */
-const BASE = Math.min(2.6, Math.max(.5, STEP * .44));
+/* 궤도 간격은 이웃한 두 궤도에서 가장 멀리 뻗는 천체의 반경 합에 비례한다.
+   반경은 호버 확대(1.32배)와 고리(바깥 반지름 2.35배)까지 포함하므로
+   어느 순간 나란히 서도 겹치지 않는다. 큰 행성 사이는 넓고 작은 행성
+   사이는 좁아 실제 태양계처럼 간격이 고르지 않다. */
+const HOVER_K = 1.32, RING_K = 2.35, GAP_K = 1.12;
+const REACH = ORBITS.map(o => Math.max(...o.list.map(s => {
+  const t = traitsOf(crewOf(s.presenter));
+  return t.size * (t.ring ? RING_K : HOVER_K);
+})));
+const NEED = REACH.slice(1).map((x, i) => (REACH[i] + x) * GAP_K);   // 간격 i ↔ i+1, BASE 단위
+const NEED_SUM = NEED.reduce((a, b) => a + b, 0);
+/* 행성 반지름 배율. 회차가 늘면 같이 작아져 R0~RMAX 안에 들어간다.
+   회차가 적어 배율이 상한에 걸리면 남는 폭을 간격마다 고르게 나눈다. */
+const BASE = N > 1 ? Math.min(2.6, (RMAX - R0) / NEED_SUM) : 2.6;
+const SLACK = N > 1 ? ((RMAX - R0) - NEED_SUM * BASE) / (N - 1) : 0;
+const RADII = [R0];
+NEED.forEach(n => RADII.push(RADII[RADII.length - 1] + n * BASE + SLACK));
 
 const bodies = [], hitMeshes = [];
 
 ORBITS.forEach((o, i) => {
-  const r = R0 + STEP * i;
+  const r = RADII[i];
 
   const orbit = new THREE.Group();
   orbit.rotation.x = (i % 2 ? 1 : -1) * (0.02 + (i % 5) * 0.012);   // 약한 궤도 경사
@@ -962,7 +975,7 @@ function frame(){
       rec.planet.rotation.y += rec.spin * dt;
     }
     if (!rec.settled) {                            // 호버 확대와 색 전환
-      const target = hovered === rec.sid ? 1.32 : 1;
+      const target = hovered === rec.sid ? HOVER_K : 1;
       rec.hoverK += (target - rec.hoverK) * .18;
       const want = recv.has(rec.s.no) ? COL_RECV : COL_RAW;
       rec.mat.color.lerp(want, .1);
