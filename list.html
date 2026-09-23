@@ -224,7 +224,8 @@ try {
   const d = await r.json();
   const nos = [...new Set(d.sessions.map(s => s.no))].sort((a, b) => b - a);   // 최신 회차 먼저
   ROUNDS = nos.map(no => ({ no, list: d.sessions.filter(s => s.no === no) }));
-  const names = [...new Set(d.sessions.map(s => s.presenter))];
+  /* crew에 등록된 사람은 발표가 없어도 목록에 올린다. 그 뒤에 crew에 없는 발표자를 붙인다 */
+  const names = [...new Set([...Object.keys(d.crew || {}), ...d.sessions.map(s => s.presenter)])];
   WHOS = names.map(who => ({
     who,
     list: d.sessions.filter(s => s.presenter === who).sort((a, b) => b.no - a.no)   // 최신 발표 먼저
@@ -275,13 +276,13 @@ function renderRounds(){
   $("roundCount").textContent = `${WHOS.length}명`;
   $("rounds").innerHTML = WHOS.map(w => {
     const latest = w.list[0];
-    const all = w.list.every(s => recv.has(s.no));
+    const all = w.list.length > 0 && w.list.every(s => recv.has(s.no));
     return `
       <li class="who"><a href="#${encodeURIComponent(w.who)}" aria-current="${cur?.kind === "who" && w.who === cur.who}">
         <span class="no who">${esc(w.who)}</span>
         <span class="meta">
-          <span class="d">발표 ${w.list.length}</span>
-          <span class="w">최근 ${latest.no}회차 · ${esc(latest.date)}</span>
+          <span class="d">${latest ? `발표 ${w.list.length}` : "첫 항해 준비 중"}</span>
+          <span class="w">${latest ? `최근 ${latest.no}회차 · ${esc(latest.date)}` : "아직 발표 없음"}</span>
         </span>
         <span class="led${all ? " on" : ""}" title="${all ? "전부 수신" : "미수신 있음"}"></span>
       </a></li>`;
@@ -310,6 +311,10 @@ function renderTalks(){
   $("talkHead").textContent = cur.kind === "round"
     ? `${cur.no}회차 · ${fmtDate(g.list[0].date)}`
     : `항해자 ${cur.who} · 발표 ${g.list.length}`;
+  if (!g.list.length) {
+    $("talks").innerHTML = `<p class="empty">아직 발표가 없습니다<br>첫 항해를 기다리는 중</p>`;
+    return;
+  }
   $("talks").innerHTML = `<ul>${g.list.map(s => `
     <li class="talk">
       <div class="stage">${stageHtml(s)}</div>
