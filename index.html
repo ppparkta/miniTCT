@@ -587,6 +587,10 @@ scene.add(sun);
 }
 
 /* 별: 점 하나짜리 드로우콜 */
+let stars;
+/* 별 구체가 한 바퀴 도는 데 20분. 눈에 띄지 않을 만큼 느리지만
+   한자리에 못 박힌 느낌은 없앤다. 세로축 회전이라 태양 아래 빈 극은 그대로다 */
+const STAR_DRIFT = (2 * Math.PI) / 1200;
 {
   const n = 2400, pos = new Float32Array(n * 3);
   let seed = 20260827;
@@ -607,7 +611,7 @@ scene.add(sun);
   }
   const g = new THREE.BufferGeometry();
   g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-  const stars = new THREE.Points(g, new THREE.PointsMaterial({
+  stars = new THREE.Points(g, new THREE.PointsMaterial({
     color: 0xE9EEF9, size: 1.5, sizeAttenuation: true, transparent: true, opacity: .85, fog: false }));
   stars.matrixAutoUpdate = false; stars.updateMatrix();
   scene.add(stars);
@@ -969,7 +973,11 @@ function frame(){
   }
 
   const revolve = !reduce && !frozen && hovered === null;
-  if (revolve) active = true;
+  if (revolve) {
+    active = true;
+    stars.rotation.y += STAR_DRIFT * dt;
+    stars.updateMatrix();
+  }
 
   for (const rec of bodies) {
     if (rec.lead && rec.grow < 1) {                // 안쪽부터 순서대로 펼쳐진다
