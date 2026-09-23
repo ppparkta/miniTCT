@@ -617,6 +617,65 @@ const STAR_DRIFT = (2 * Math.PI) / 1200;
   scene.add(stars);
 }
 
+/* 별똥별: 선분 하나. 카메라 시야 안 임의 지점에서 출발하되, 그 시선이
+   궤도 원반(y=0 평면, 반지름 RMAX×1.25)을 비껴가는 지점만 고르고 원반보다
+   먼 곳에 둔다. 어느 각도로 보고 있어도 화면에는 들어오고 궤도 위로는
+   지나가지 않는다 */
+const meteor = new THREE.Line(
+  new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]),
+  new THREE.LineBasicMaterial({ color: 0xF4F7FF, transparent: true, opacity: 0,
+    blending: THREE.AdditiveBlending, depthWrite: false }));
+meteor.visible = false;
+meteor.frustumCulled = false;                       // 위치가 매 프레임 바뀐다
+scene.add(meteor);
+let mt = null;                                      // 날고 있는 별똥별
+let nextMeteor = 4 + Math.random() * 6;             // 다음 출현 시각(elapsed 기준)
+const mtA = new THREE.Vector3(), mtB = new THREE.Vector3();
+
+function spawnMeteor(){
+  /* 화면을 꽉 채울 만큼 가까이 왔으면 비껴가는 시선이 없다. 몇 번 시도해
+     안 되면 이번은 건너뛴다 */
+  for (let k = 0; k < 12; k++) {
+    mtA.set(Math.random() * 1.8 - .9, Math.random() * 1.8 - .9, .5).unproject(camera)
+       .sub(camera.position).normalize();          // 시선 위 한 방향
+    /* 카메라는 늘 궤도면 위에 있다. 아래로 향하는 시선만 원반과 만난다 */
+    let along = 0;
+    if (mtA.y < -1e-4) {
+      along = -camera.position.y / mtA.y;          // 궤도면까지 거리
+      mtB.copy(camera.position).addScaledVector(mtA, along);
+      if (mtB.length() < RMAX * 1.25) continue;    // 궤도 원반 위를 지난다 (RMAX는 아래 궤도 절 선언)
+    }
+    const start = camera.position.clone()
+      .addScaledVector(mtA, Math.max(along, camera.position.length()) + 60);
+    /* 시선에 수직인 임의 방향으로 날아야 선이 길게 보인다 */
+    const dir = mtB.set(Math.random() - .5, Math.random() - .5, Math.random() - .5)
+      .cross(mtA).normalize().clone();
+    mt = { start, dir, t: 0, dur: .6 + Math.random() * .5, len: 30 + Math.random() * 20 };
+    meteor.visible = true;
+    return;
+  }
+  nextMeteor = elapsed + 6 + Math.random() * 10;
+}
+
+function stepMeteor(dt){
+  mt.t += dt / mt.dur;
+  if (mt.t >= 1) {
+    mt = null;
+    meteor.visible = false;
+    nextMeteor = elapsed + 6 + Math.random() * 10;
+    return;
+  }
+  const head = mt.t * mt.len;
+  const tail = Math.max(0, head - mt.len * .38);   // 꼬리는 머리를 뒤따른다
+  const pos = meteor.geometry.attributes.position;
+  mtA.copy(mt.start).addScaledVector(mt.dir, head);
+  mtB.copy(mt.start).addScaledVector(mt.dir, tail);
+  pos.setXYZ(0, mtA.x, mtA.y, mtA.z);
+  pos.setXYZ(1, mtB.x, mtB.y, mtB.z);
+  pos.needsUpdate = true;
+  meteor.material.opacity = Math.pow(Math.sin(mt.t * Math.PI), .6) * .9;
+}
+
 /* ============================================================
    5. 궤도
    ============================================================ */
@@ -978,6 +1037,8 @@ function frame(){
     stars.rotation.y += STAR_DRIFT * dt;
     stars.updateMatrix();
   }
+  if (mt) { stepMeteor(dt); active = true; }
+  else if (!reduce && elapsed > nextMeteor) { spawnMeteor(); active = true; }
 
   for (const rec of bodies) {
     if (rec.lead && rec.grow < 1) {                // 안쪽부터 순서대로 펼쳐진다
